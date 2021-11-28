@@ -1,8 +1,12 @@
 # tools
 
-To install CX Monitor navigate to code repo and run:
+To install CX Monitor:
 
-`./setup.sh`
+ - Clone repo
+   - `git clone https://github.com/fleav19/tools.git`
+ -  CD into diretory
+ -  Run
+    -  `./setup.sh`
 
 Verify tool was installed and scheduled correctly by running the following command after a minute and verify there is valid output
 
