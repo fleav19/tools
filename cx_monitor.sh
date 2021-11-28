@@ -16,21 +16,27 @@ timestamp=$(date +%s)
 date=$(date +"%Y-%m-%dT%H:%M:%S%:z")
 time=$(date +%H:%M)
 statefile=${OUTPUT_DIR}/metadata/statefile
-dir=${OUTPUT_DIR}/${year}/${month}/${day}
-file=${dir}/output.txt
 log=${OUTPUT_DIR}/log.txt
 errorlog=${OUTPUT_DIR}/error_log.txt
 resultfile=${OUTPUT_DIR}/results.txt
 
-if [ $1 ]; then
- echo "debug end"
- exit 1
-fi
-
-if [ ! -d ${dir} ]; then
-  echo "Created...${dir}"
-  mkdir -p "${dir}"
-fi
+# Happens either at start of new day
+closeout_logs () {
+  diff=$((timestamp-lostCxTimestamp_p))
+  downtime_p=$((downtime_p+diff))
+  echo "double check math...it happened...cx was out through midnight on: ${date}" >> $error_log
+  # report to results file
+  humanReadableDowntime=$(printf '%dh:%dm:%ds\n' $((downtime_p/3600)) $((downtime_p%3600/60)) $((downtime_p%60)))
+  echo "Total downtime on ${date}::${humanReadableDowntime}" >> $resultfile
+# NEED TO HANDLE DROP IN WIFI MID DAY AND NOT LOST DOWNTIME TALLY. NEED TO SAVE SOME SORT OF REFERENCE....MAYBE NEED DATE OF LOST WIFI AND WHICH WIFI IT WAS
+# IF ITS
+# NEW IDEA, KEEP DOWNTIME_P FOR EACH WIFI, CLOSE OUT ALL WHEN NEW DAY...WHICH REMINDS ME..I DON'T CURRENTLY HANDLE SHUTTING WIFI OFF FOR A DAY AND PICKING UP LATER
+# CURRENTLY IT WOULD LOG AS IF DOWNNTIME WAS FOR NEW DAY...NEED TO FIX BY ADDING DATE FOR WHICH DOWNTIME_P IS FOR
+    # restart all counters
+    lostCxTimestamp_p=${timestamp}
+    foundCxTimestamp_p=${timestamp}
+    downtime_p=0
+}
 
 check_connection() {
   # If the persistence file exists, read the variable value from it
@@ -47,9 +53,10 @@ check_connection() {
     downtime_p=0
   fi
 
-  # check if 00:00 on a Sunday
+  # TODO: 2.0 add weekly reporting
+  # check if 00:00
   if [[ "$time" == "00:00" ]]; then
-    # if cx is currently dropped, calculate remaining total for day
+    # if cx is currently dropped, calculate remaining total
     # it wont double count since we are setting lostCx time stamp to now
     # if it happens that the connection is back at 00:00 then the new days count will just be 0
     if [ "$isConnected_p" = false ]; then
@@ -112,13 +119,23 @@ check_connection() {
   echo downtime_p=${downtime_p} >> $statefile
 }
 
-wifiName=$(/Sy*/L*/Priv*/Apple8*/V*/C*/R*/airport -I | awk '/ SSID:/ {print $2}')
-if [ -z "$wifiName" ]
+if [ $1 ]; then
+ echo "debug end"
+ exit 1
+fi
+
+## MIGHT BE GOOD TO MOVE check_connection function out to a diff file 
+WIFI_NAME=$(/Sy*/L*/Priv*/Apple8*/V*/C*/R*/airport -I | awk '/ SSID:/ {print $2}')
+dir=${OUTPUT_DIR}/${WIFI_NAME}/${year}/${month}/${day}
+file=${dir}/output.txt
+if [ -z "$WIFI_NAME" ]
 then
-      echo "No Wifi Don't bother running"
-      # UPDATE TO ONLY DO THIS WHEN CONNECTED TO MY WIFI OR CREATE REPORT FOR EACH WIFI
-      #for debug
-      # check_connection
+  echo "No Wifi Don't bother running"
+  # Lost WIFI Let's log and reset
 else
+  if [ ! -d ${dir} ]; then
+    echo "Created...${dir}"
+    mkdir -p "${dir}"
+  fi
       check_connection
 fi

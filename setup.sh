@@ -14,8 +14,7 @@ if [ ! -d ${INSTALL_DIR} ]; then
   echo "CX Monitor isntalled in...${INSTALL_DIR}"
   mkdir -p "${INSTALL_DIR}"
 else
-  echo "Looks like tool is already installed. Delete directory '${INSTALL_DIR} and try again to re-install"
-#   echo "....looks like tool already exists. Run with '-up' to upgrade. (Delete and reinstall)"
+  echo "Looks like tool is already installed........updating"
 fi
 
 if [ ! -d ${OUTPUT_DIR} ]; then
@@ -27,14 +26,14 @@ fi
 
 cp cx_monitor.sh ${INSTALL_DIR}/cx_monitor.sh
 
-echo "done"
+INSTALLER_DATA=$INSTALL_DIR/install_data
 
-INTSALL_HELPER=$INSTALL_DIR/install_data
-
-> ${INTSALL_HELPER}
-echo OUTPUT_DIR=${OUTPUT_DIR} >> ${INTSALL_HELPER}
+> ${INSTALLER_DATA}
+echo OUTPUT_DIR=${OUTPUT_DIR} >> ${INSTALLER_DATA}
 
 croncmd=${INSTALL_DIR}/cx_monitor.sh >/dev/null 2>&1
 cronjob="*/1 * * * * $croncmd"
 
 eval '( crontab -l | grep -v -F "$croncmd" ; echo "$cronjob" ) | crontab -'
+
+echo "DONE!"
