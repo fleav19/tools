@@ -1,10 +1,4 @@
 #!/bin/bash 
-# printf '%dh:%dm:%ds\n' $((secs/3600)) $((secs%3600/60)) $((secs%60))
-
-
-humanReadableDowntime=$(printf '%dh:%dm:%ds\n' $((downtime_p/3600)) $((downtime_p%3600/60)) $((downtime_p%60)))
-echo $humanReadableDowntime
-
 echo $HOME
 INSTALL_DIR=$HOME/.nb/tools/CXMonitor/code
 OUTPUT_DIR=$HOME/.nb/tools/CXMonitor/output
@@ -23,6 +17,9 @@ fi
 if [ ! -d ${OUTPUT_DIR}/metadata ]; then
   mkdir -p "${OUTPUT_DIR}/metadata"
 fi
+if [ ! -d ${OUTPUT_DIR}/metadata/tmp ]; then
+  mkdir -p "${OUTPUT_DIR}/metadata/tmp"
+fi
 
 cp cx_monitor.sh ${INSTALL_DIR}/cx_monitor.sh
 
@@ -32,7 +29,7 @@ INSTALLER_DATA=$INSTALL_DIR/install_data
 echo OUTPUT_DIR=${OUTPUT_DIR} >> ${INSTALLER_DATA}
 
 croncmd=${INSTALL_DIR}/cx_monitor.sh >/dev/null 2>&1
-cronjob="*/1 * * * * $croncmd"
+cronjob="*/1 * * * * bash $croncmd"
 
 eval '( crontab -l | grep -v -F "$croncmd" ; echo "$cronjob" ) | crontab -'
 
