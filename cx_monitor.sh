@@ -1,14 +1,7 @@
 #!/bin/bash 
-# TODO in 2.0
-# get_location() {
-#   echo "JJJ"
-# }
-
 #Globals
 source $HOME/.nb/tools/CXMonitor/code/install_data
 echo ${OUTPUT_DIR}
-#TEMP< REMOVE!!!!!!!!!!!
-OUTPUT_DIR=/USERS/aavila/code/tools/debug
 
 year=$(date +"%Y")
 month=$(date +%b)
@@ -27,15 +20,8 @@ HASHMAP_FILE=${OUTPUT_DIR}/metadata/tmp
 # Can probably move if we do check create file in setup.sh
 # source $statefile
 
-temp=false
-#DEBGU
-WIFI_NAME=mockwifi6
-# # REMOVE
-# exit 0
-
 # Happens either at start of new day
 closeout_logs () {
-  echo "here"
   echo $LAST_RAN_DATE
   echo "--------REPORT FOR:${LAST_RAN_DATE}---------" >> $resultfile
   # Only strange case is if we are at 00:00 and the cx was off
@@ -53,8 +39,6 @@ closeout_logs () {
     KEY=$(basename $FILE)
     echo "logging...${KEY}"
     source ${HASHMAP_FILE}/$KEY
-    echo "HH"
-    echo "${downtime_p}"
     humanReadableDowntime=$(printf '%dh:%dm:%ds\n' $((downtime_p/3600)) $((downtime_p%3600/60)) $((downtime_p%60)))
     echo "Total downtime for ${KEY}---- ${humanReadableDowntime}" >> $resultfile
   done
@@ -86,7 +70,6 @@ check_connection() {
   if [ -f "${HASHMAP_KEY}" ]; then
     source $HASHMAP_KEY
   else
-    echo "FRESH START"
     downtime_p=0
     # Because this key didn't exist, safe to assume it's a new wifi cx for the day
     # We'll abandon the previous statefile and start fresh here
@@ -99,10 +82,7 @@ check_connection() {
     closeout_logs
   fi
 
-  # Debug
-  if [[ $temp = true ]]; then
-  # if nc -zw1 google.com 443; then
-    echo "all good"
+  if nc -zw1 google.com 443; then
     foundCxTimestamp_p=${timestamp}
     if [ "$isConnected_p" = false ]; then
       #FINISH LOG FROM LOST CONNECTION
@@ -136,24 +116,33 @@ check_connection() {
       isConnected_p=false
     fi
   fi
-
+echo "JJ"
   > $statefile
   echo isConnected_p=${isConnected_p} >> $statefile
   echo foundCxTimestamp_p=${foundCxTimestamp_p} >> $statefile
   echo lostCxTimestamp_p=${lostCxTimestamp_p} >> $statefile
   echo LAST_RAN_DATETIME=${date} >> $statefile
   echo LAST_RAN_DATE=${JUST_DATE} >> $statefile
+  echo $HASHMAP_KEY
   echo downtime_p=${downtime_p} > ${HASHMAP_KEY}
 }
 
 ## MIGHT BE GOOD TO MOVE check_connection function out to a diff file
-# WIFI_NAME=$(/Sy*/L*/Priv*/Apple8*/V*/C*/R*/airport -I | awk '/ SSID:/ {print $2}')
+WIFI_NAME_WITH_SSID=$(/Sy*/L*/Priv*/Apple8*/V*/C*/R*/airport -I | awk '/ SSID:/')
+WIFI_NAME_WITH_SSID="${WIFI_NAME_WITH_SSID// /}"
+prefix="SSID:"
+WIFI_NAME=${WIFI_NAME_WITH_SSID#"$prefix"}
+
+echo $(/Sy*/L*/Priv*/Apple8*/V*/C*/R*/airport -I | awk '/ SSID:/')
 dir=${OUTPUT_DIR}/${WIFI_NAME}/${year}/${month}/${day}
 file=${dir}/output.txt
 
 if [ -z "$WIFI_NAME" ]
 then
-  echo "No Wifi Don't bother running"
+  WIFI_NAME="NO_WIFI_FOUND"
+  dir=${OUTPUT_DIR}/${WIFI_NAME}/${year}/${month}/${day}
+  file=${dir}/output.txt
+  echo "No Wifi Don't bother running???"
   #
   if [ ! -d ${dir} ]; then
     echo "Created...${dir}"
